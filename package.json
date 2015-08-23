@@ -1,0 +1,20 @@
+{
+  "name": "cycle-pont",
+  "version": "1.0.0",
+  "description": "",
+  "main": "out/pong.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel src --out-dir out --source-maps",
+    "watch": "babel src --watch --out-dir out --source-maps"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@cycle/core": "^2.0.1",
+    "rx": "^2.5.3"
+  },
+  "devDependencies": {
+    "babel": "^5.8.3"
+  }
+}

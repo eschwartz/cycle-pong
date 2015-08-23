@@ -1,21 +1,48 @@
 var state = {
-  walls: [
-    {position: [0, 0]},
-    // ... probably want a factory for creating these
-  ],
+  isPaused: false,
   entities: {
-    isPaused: false,
+    wallTop: {
+      id: 'wallTop',
+      position: [0, 0],     // position is location of top-left corder
+      width: 100,
+      height: 1
+    },
+    wallBottom: {
+      id: 'wallBottom',
+      position: [0, 100],
+      width: 100,
+      height: 1
+    },
+    goalPlayerA: {
+      id: 'goalPlayerA',
+      position: [0, 1],
+      width: 1,
+      height: 98
+    },
+    goalPlayerB: {
+      id: 'goalPlayerB',
+      position: [100, 1],
+      width: 1,
+      height: 98
+    },
     playerA: {
-      position: [0, 50],
+      id: 'playerA',
+      position: [1, 50],
+      width: 1,
+      height: 10,
       direction: 180,  // up
       velocity: 1,
     },
     playerB: {
-      position: [100, 50],
+      id: 'playerB',
+      position: [99, 50],
+      width: 1,
+      height: 10,
       direction: 270,  // down
       velocity: 1
     },
     ball: {
+      id: 'ball',
       position: [x, y],
       direction: 48, // Degrees
     }
@@ -72,22 +99,22 @@ function Intent({CanvasDriver, AnimationDriver}) {
     $togglePause: CanvasDriver.get('keypress').
       filter(evt => evt.char === 'space').
       map(() => null),
-    $tick: AnimationDriver.animationFrame()
+    $tick: Rx.Observable.interval(100)
   }
 }
 
 function Model(intent) {
   var $state = Observable.
-    startWith(initialState).
     merge(
       intent.$changePlayerADirection.map(Actions.ChangeDirection('playerA')),
       intent.$changePlayerBDirection.map(Actions.ChangeDirection('playerB')),
       intent.$togglePause.map(() => Actions.TogglePause),
       intent.$tick.map(() => Actions.MoveAllEntities)
     ).
-    scan((state, action) => action(state));
+    scan((state, action) => action(state), initialState);
 
-  var $collisions = $state.
+
+  var $ballCollisions = $state.
     // flatMap, to remove empty values
     flatMap(state => {
       var ball = state.entities.ball;
@@ -97,14 +124,24 @@ function Model(intent) {
         entity => entity.position.x === ball.position.x && entity.position.y === ball.position.y);
 
       if (collidedEntity) {
-        return Observable.from(collidableEntities);
+        return Observable.from(collidedEntity);
       }
     });
 
+  var $playerAGoals = $ballCollisions.filter(entity => entity.id === 'playerBGoal');
+  var $playerBGoals = $ballCollisions.filter(entity => entity.id === 'playerAGoal');
+  var $hardObjectCollisions = $ballCollisions.filter(entity => _.contains(['wallTop', 'wallBottom', 'playerA', 'playerB'], entity.id));
+
   return $state.
-    combineLatest($collisions, (state, collision) => {
-      return Actions.Bounce(state.entities.ball)(state);
-    })
+    combineLatest($ballCollisions, (state, collision) => {
+      return Observable.merge(
+        $playerAGoals.map(Actions.PointFor(state.entities.playerA)),
+        $playerBGoals.map(Actions.PointFor(state.entities.playerB)),
+        $hardObjectCollisions.map(Actions.Bounce(state.entities.ball))
+      ).
+        scan((state, actions) => actions(state), state);   // or something like that
+    }).
+    sample(intent.$tick);
 }
 
 var move = position => direction => velocity => {
