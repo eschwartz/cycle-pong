@@ -19,18 +19,18 @@ function model(actions) {
 }
 
 function view($state) {
-  return $state.map(state => [
-      {entity: state.entities.wallTop, char: '-'},
-      {entity: state.entities.wallBottom, char: '-'},
-      {entity: state.entities.playerA, char: '#'},
-      {entity: state.entities.playerB, char: '#'},
-      {entity: state.entities.ball, char: '*'}
-    ].
-      map(view => ({
-        points: entityPoints(view.entity),
-        char: view.char
-      }))
-  );
+  return $state.map(state => ({
+    graphics: [
+      {
+        type: 'circle',
+        x: state.entities.ball.dimensions.x,
+        y: state.entities.dimensions.y,
+        radius: 5,
+        fill: 0xFFFFFF, // use parseInt(0xFFFFFF, 16), I thinkg
+        alpha: 1
+      }
+    ]
+  }));
 }
 
 function entityPoints(entity) {
