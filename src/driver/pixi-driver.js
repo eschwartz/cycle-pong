@@ -29,7 +29,11 @@ function makePixiDriver(el, width, height) {
 
           circle.lineStyle(0);
           circle.beginFill(graphic.fill, graphic.alpha);
-          circle.drawCircle(graphic.x, graphic.y, graphic.radius);
+          circle.drawCircle(
+            Math.round(graphic.x),
+            Math.round(graphic.y),
+            Math.round(graphic.radius)
+          );
           circle.endFill();
 
         });

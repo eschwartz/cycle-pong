@@ -1,9 +1,10 @@
 import {Point, Dimensions} from '../geometry/geometries.js';
+import _ from 'lodash';
 
 export default {
   isPaused: false,
   entities: {
-    wallTop: {
+    /*wallTop: {
       id: 'wallTop',
       position: Point(0, 0),     // position is location of top-left corder
       dimensions: Dimensions(20, 1)
@@ -29,21 +30,23 @@ export default {
       id: 'playerA',
       position: Point(1, 50),
       dimensions: Dimensions(1, 3),
-      direction: 180,  // up
+      direction: 0,  // up
       velocity: 1
     },
     playerB: {
       id: 'playerB',
       position: Point(19, 5),
       dimensions: Dimensions(1, 3),
-      direction: 270,  // down
+      direction: 180,  // down
       velocity: 1
-    },
+    },*/
     ball: {
       id: 'ball',
-      position: Point(100, 50),
-      direction: 48, // Degrees
-      dimensions: Dimensions(10, 10)
+      position: Point(_.random(100, 700), _.random(100, 500)),
+      direction: _.random(0, 359), // Degrees, where `0` is moving right
+      dimensions: Dimensions(10, 10),
+      velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)}
     }
   }
 };
+

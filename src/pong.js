@@ -5,17 +5,34 @@ import initialState from './state/initial';
 import createArray from './util/create-array';
 import makePixiDriver from './driver/pixi-driver.js';
 import {Point} from './geometry/geometries';
+import $tick from './util/tick';
+import {move, addPoints} from './geometry/util';
+
 
 Observable.prototype.applyTo = function(seed) {
   return this.scan(seed, (seedVal, operation) => operation(seedVal)).startWith(seed);
 };
 
+var Actions = {
+  AdvanceEntity: entityId => state => {
+    var entity = state.entities[entityId];
+    entity.position = addPoints(entity.position, entity.velocity);
+    return state;
+  },
+  AdvanceAllEntities: state => _.keys(state.entities).
+    reduce((state, entityId) => Actions.AdvanceEntity(entityId)(state), state)
+};
+
 function intent(DOM) {
-  return {};
+  return {
+    $advanceEntities: $tick.
+      map(() => Actions.AdvanceAllEntities)
+  };
 }
 
 function model(actions) {
-  return Observable.from([initialState]);
+  return actions.$advanceEntities.
+    applyTo(initialState);
 }
 
 function view($state) {
