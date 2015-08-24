@@ -4,17 +4,19 @@ import _ from 'lodash';
 export default {
   isPaused: false,
   entities: {
-    /*wallTop: {
+    wallTop: {
       id: 'wallTop',
       position: Point(0, 0),     // position is location of top-left corder
-      dimensions: Dimensions(20, 1)
+      dimensions: Dimensions(800, 1),
+      velocity: Point(0, 0)
     },
     wallBottom: {
       id: 'wallBottom',
-      position: Point(0, 20),
-      dimensions: Dimensions(20, 1)
+      position: Point(0, 599),
+      dimensions: Dimensions(800, 1),
+      velocity: Point(0, 0)
     },
-    goalPlayerA: {
+    /*goalPlayerA: {
       id: 'goalPlayerA',
       position: Point(0, 1),
       dimensions: Dimensions(1, 18)
@@ -43,9 +45,9 @@ export default {
     ball: {
       id: 'ball',
       position: Point(_.random(100, 700), _.random(100, 500)),
-      direction: _.random(0, 359), // Degrees, where `0` is moving right
       dimensions: Dimensions(10, 10),
-      velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)}
+      //velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)}
+      velocity: Point(0, 1)
     }
   }
 };

@@ -1,6 +1,6 @@
 import {run} from '@cycle/core';
 import _ from 'lodash';
-import {Observable} from 'rx';
+import {Observable, BehaviorSubject} from 'rx';
 import initialState from './state/initial';
 import createArray from './util/create-array';
 import makePixiDriver from './driver/pixi-driver.js';
@@ -20,7 +20,15 @@ var Actions = {
     return state;
   },
   AdvanceAllEntities: state => _.keys(state.entities).
-    reduce((state, entityId) => Actions.AdvanceEntity(entityId)(state), state)
+    reduce((state, entityId) => Actions.AdvanceEntity(entityId)(state), state),
+  BounceDown: state => {
+    state.entities.ball.velocity.y = Math.abs(state.entities.ball.velocity.y);
+    return state;
+  },
+  BounceUp: state => {
+    state.entities.ball.velocity.y = Math.abs(state.entities.ball.velocity.y) * -1;
+    return state;
+  }
 };
 
 function intent(DOM) {
@@ -31,8 +39,30 @@ function intent(DOM) {
 }
 
 function model(actions) {
-  return actions.$advanceEntities.
-    applyTo(initialState);
+  var operations = new BehaviorSubject(x => x);
+  var $state = operations.
+    sample($tick).
+    scan(initialState, (state, operation) => {
+      return operation(state);
+    }).
+    startWith(initialState);
+
+
+  actions.$advanceEntities.subscribe(operations);
+
+  $state.
+    filter(state => state.entities.ball.position.y <= state.entities.wallTop.position.y).
+    map(() => Actions.BounceDown).
+    subscribe(operations);
+
+  $state.
+    filter(state => state.entities.ball.position.y >= state.entities.wallBottom.position.y).
+    map(() => Actions.BounceUp).
+    subscribe(operations);
+
+  //operations.forEach(op => console.log(op));
+
+  return $state;
 }
 
 function view($state) {
