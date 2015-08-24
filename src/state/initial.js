@@ -3,32 +3,12 @@ import _ from 'lodash';
 
 export default {
   isPaused: false,
+  gameWidth: 800,
+  gameHeight: 600,
+  playerAPoints: 0,
+  playerBPoints: 0,
   entities: {
-    wallTop: {
-      id: 'wallTop',
-      position: Point(0, 0),     // position is location of top-left corder
-      dimensions: Dimensions(800, 1),
-      velocity: Point(0, 0)
-    },
-    wallBottom: {
-      id: 'wallBottom',
-      position: Point(0, 599),
-      dimensions: Dimensions(800, 1),
-      velocity: Point(0, 0)
-    },
-    /*goalPlayerA: {
-      id: 'goalPlayerA',
-      position: Point(0, 1),
-      dimensions: Dimensions(1, 18)
-    },
-    goalPlayerB: {
-      id: 'goalPlayerB',
-      position: Point(20, 1),
-      dimensions: Dimensions(1, 18),
-      width: 1,
-      height: 20
-    },
-    playerA: {
+    /*playerA: {
       id: 'playerA',
       position: Point(1, 50),
       dimensions: Dimensions(1, 3),
@@ -45,9 +25,9 @@ export default {
     ball: {
       id: 'ball',
       position: Point(_.random(100, 700), _.random(100, 500)),
-      dimensions: Dimensions(10, 10),
-      //velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)}
-      velocity: Point(0, 1)
+      velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)},
+      dimensions: Dimensions(10, 10)
+      //velocity: Point(0, 1)
     }
   }
 };

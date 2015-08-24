@@ -28,6 +28,15 @@ var Actions = {
   BounceUp: state => {
     state.entities.ball.velocity.y = Math.abs(state.entities.ball.velocity.y) * -1;
     return state;
+  },
+  ScorePlayerA: state => _.extend(state, { playerAPoints: state.playerAPoints + 1}),
+  ScorePlayerB: state => _.extend(state, { playerBPoints: state.playerBPoints + 1}),
+  ResetBall: state => {
+    _.extend(state.entities.ball, {
+      position: Point(_.random(100, state.gameWidth - 100), _.random(100, state.gameHeight - 100)),
+      velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)}
+    });
+    return state;
   }
 };
 
@@ -50,22 +59,44 @@ function model(actions) {
 
   actions.$advanceEntities.subscribe(operations);
 
-  $state.
-    filter(state => state.entities.ball.position.y <= state.entities.wallTop.position.y).
+  var $wallTopCollisions = $state.
+    filter(state => state.entities.ball.position.y <= 0);
+  var $wallBottomCollisions = $state.
+    filter(state => state.entities.ball.position.y >= state.gameHeight);
+
+  var $playerAGoalCollision = $state.
+    filter(state => state.entities.ball.position.x <= 0);
+  var $playerBGoalCollision = $state.
+    filter(state => state.entities.ball.position.x >= state.gameWidth);
+
+  $wallTopCollisions.
     map(() => Actions.BounceDown).
     subscribe(operations);
-
-  $state.
-    filter(state => state.entities.ball.position.y >= state.entities.wallBottom.position.y).
+  $wallBottomCollisions.
     map(() => Actions.BounceUp).
     subscribe(operations);
 
-  //operations.forEach(op => console.log(op));
+  $playerAGoalCollision.
+    map(() => Actions.ScorePlayerB).
+    subscribe(operations);
+
+  $playerBGoalCollision.
+    map(() => Actions.ScorePlayerA).
+    subscribe(operations);
+
+  Observable.merge($playerAGoalCollision, $playerBGoalCollision).
+    map(() => Actions.ResetBall).
+    subscribe(operations);
 
   return $state;
 }
 
 function view($state) {
+  $state.forEach(state => {
+    document.getElementById('playerAScore').innerText = state.playerAPoints;
+    document.getElementById('playerBScore').innerText = state.playerBPoints;
+  });
+
   return $state.map(state => {
     return {
       graphics: [
