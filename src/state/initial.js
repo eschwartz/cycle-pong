@@ -41,9 +41,9 @@ export default {
     },
     ball: {
       id: 'ball',
-      position: Point(10,5),
+      position: Point(100, 50),
       direction: 48, // Degrees
-      dimensions: Dimensions(1, 1)
+      dimensions: Dimensions(10, 10)
     }
   }
 };

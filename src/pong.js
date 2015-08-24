@@ -3,7 +3,7 @@ import _ from 'lodash';
 import {Observable} from 'rx';
 import initialState from './state/initial';
 import createArray from './util/create-array';
-import makeStdoutCanvasDriver from './driver/stdout-canvas-driver';
+import makePixiDriver from './driver/pixi-driver.js';
 import {Point} from './geometry/geometries';
 
 Observable.prototype.applyTo = function(seed) {
@@ -19,29 +19,20 @@ function model(actions) {
 }
 
 function view($state) {
-  return $state.map(state => ({
-    graphics: [
-      {
-        type: 'circle',
-        x: state.entities.ball.dimensions.x,
-        y: state.entities.dimensions.y,
-        radius: 5,
-        fill: 0xFFFFFF, // use parseInt(0xFFFFFF, 16), I thinkg
-        alpha: 1
-      }
-    ]
-  }));
-}
-
-function entityPoints(entity) {
-  var row = y => createArray(entity.dimensions.width).
-    map((x, i) => Point(entity.position.x + i, y));
-
-  var rows = createArray(entity.dimensions.height).
-    map((x, i) => row(i));
-
-  // Flatten by one dimension, so we have a list of points
-  return _.flatten(rows, true);
+  return $state.map(state => {
+    return {
+      graphics: [
+        {
+          type: 'circle',
+          x: state.entities.ball.position.x,
+          y: state.entities.ball.position.y,
+          radius: state.entities.ball.dimensions.width / 2,
+          fill: 0xFFFFFF, // use parseInt(0xFFFFFF, 16), I think
+          alpha: 1
+        }
+      ]
+    }
+  });
 }
 
 
@@ -56,5 +47,5 @@ function main({canvas}) {
 }
 
 run(main, {
-  canvas: makeStdoutCanvasDriver(20, 15)
+  canvas: makePixiDriver(document.getElementById('game'), 800, 600)
 });

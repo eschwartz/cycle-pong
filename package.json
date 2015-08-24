@@ -5,8 +5,8 @@
   "main": "out/pong.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "browserify src/pixi.js -t babelify -d --outfile out/pixi.js",
-    "watch": "watchify src/pixi.js -t babelify -d --outfile out/pixi.js -v"
+    "build": "browserify src/pong.js -t babelify -d --outfile out/pong.js",
+    "watch": "watchify src/pong.js -t babelify -d --outfile out/pong.js -v"
   },
   "author": "",
   "license": "ISC",
