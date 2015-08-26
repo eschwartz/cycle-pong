@@ -1,35 +1,51 @@
 import {Point, Dimensions} from '../geometry/geometries.js';
 import _ from 'lodash';
 
+
+var gameWidth = 800;
+var gameHeight = 600;
+
 export default {
   isPaused: false,
-  gameWidth: 800,
-  gameHeight: 600,
+  gameWidth: gameWidth,
+  gameHeight: gameHeight,
   playerAPoints: 0,
   playerBPoints: 0,
   entities: {
-    /*playerA: {
+    playerA: {
       id: 'playerA',
-      position: Point(1, 50),
-      dimensions: Dimensions(1, 3),
-      direction: 0,  // up
-      velocity: 1
+      position: Point(20, gameHeight / 2),
+      dimensions: Dimensions(10, 60),
+      velocity: Point(0, 0)
     },
     playerB: {
       id: 'playerB',
-      position: Point(19, 5),
-      dimensions: Dimensions(1, 3),
-      direction: 180,  // down
-      velocity: 1
-    },*/
+      position: Point(gameWidth - 20, gameHeight / 2),
+      dimensions: Dimensions(10, 60),
+      velocity: Point(0, 0)
+    },
     ball: {
       id: 'ball',
-      //position: Point(_.random(100, 700), _.random(100, 500)),
       position: Point(795, 100),
       dimensions: Dimensions(10, 10),
-      //velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)}
       velocity: Point(0.5, 0)
-    }
+    },/*
+    wallTop: {
+      position: Point(1, 0),
+      dimensions: Dimensions(gameWidth - 2, 1)
+    },
+    wallBottom: {
+      position: Point(1, gameHeight),
+      dimensions: Dimensions(gameWidth - 1, 1)
+    },
+    wallLeft: {
+      position: Point(0, 0),
+      dimensions: Dimensions(1, gameHeight)
+    },
+    wallRight: {
+      position: Point(gameWidth, 0),
+      dimensions: Dimensions(1, gameHeight)
+    }*/
   }
 };
 

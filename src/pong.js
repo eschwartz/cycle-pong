@@ -33,21 +33,65 @@ var Actions = {
     state.entities.ball.velocity.y = Math.abs(state.entities.ball.velocity.y) * -1;
     return state;
   },
-  ScorePlayerA: state => _.extend(state, { playerAPoints: state.playerAPoints + 1}),
-  ScorePlayerB: state => _.extend(state, { playerBPoints: state.playerBPoints + 1}),
+  BounceRight: state => {
+    state.entities.ball.velocity.x = Math.abs(state.entities.ball.velocity.x);
+    return state;
+  },
+  BounceLeft: state => {
+    state.entities.ball.velocity.x = Math.abs(state.entities.ball.velocity.x) * -1;
+    return state;
+  },
+  ScorePlayerA: state => _.extend(state, {playerAPoints: state.playerAPoints + 1}),
+  ScorePlayerB: state => _.extend(state, {playerBPoints: state.playerBPoints + 1}),
   ResetBall: state => {
     _.extend(state.entities.ball, {
       position: Point(_.random(200, state.gameWidth - 200), _.random(200, state.gameHeight - 200)),
       velocity: randomVelocity(5)
     });
     return state;
+  },
+  ChangeVelocity: entityId => velocity => state => {
+    state.entities[entityId].velocity = velocity;
+    return state
   }
 };
 
-function intent(DOM) {
+const Keys = {
+  DOWN: 40,
+  UP: 38,
+  w: 87,
+  s: 83,
+  a: 65,
+  d: 68
+};
+
+function intent() {
+  var keyDown$ = key => Observable.fromEvent(document, 'keydown').
+    filter(evt => evt.which === key);
+  var keyUp$ = key => Observable.fromEvent(document, 'keyup')/*.
+    filter(evt => evt.which === key)*/;
+  /*var keyPress$ = key => keyDown$(key).
+    flatMap(evt => keyDown$(key).
+      startWith(evt).
+      takeUntil(keyUp$(key))
+  );*/
+  var playerSpeed = 8;
+
   return {
     $advanceEntities: $tick.
-      map(() => Actions.AdvanceAllEntities)
+      map(() => Actions.AdvanceAllEntities),
+    $playerBMoveDown: keyDown$(Keys.DOWN).
+      map(() => Actions.ChangeVelocity('playerB')(Point(0, playerSpeed))),
+    $playerBMoveUp: keyDown$(Keys.UP).
+      map(() => Actions.ChangeVelocity('playerB')(Point(0, playerSpeed * -1))),
+    $stopPlayerB: Observable.merge(keyUp$(Keys.UP), keyUp$(Keys.DOWN)).
+      map(() => Actions.ChangeVelocity('playerB')(Point(0, 0))),
+    $playerAMoveDown: keyDown$(Keys.s).
+      map(() => Actions.ChangeVelocity('playerA')(Point(0, playerSpeed))),
+    $playerAMoveUp: keyDown$(Keys.w).
+      map(() => Actions.ChangeVelocity('playerA')(Point(0, playerSpeed * -1))),
+    $stopPlayerA: Observable.merge(keyUp$(Keys.s), keyUp$(Keys.w)).
+      map(() => Actions.ChangeVelocity('playerA')(Point(0, 0)))
   };
 }
 
@@ -77,6 +121,15 @@ function event($source) {
     map(x => x.val);
 }
 
+function boxCollision(entityA, entityB) {
+  return (
+    entityA.position.x < entityB.position.x + entityB.dimensions.width &&
+    entityA.position.x + entityA.dimensions.width > entityB.position.x &&
+    entityA.position.y < entityB.position.y + entityB.dimensions.height &&
+    entityA.dimensions.height + entityA.position.y > entityB.position.y
+  )
+}
+
 function model(actions) {
   var operations = new Subject();
   var $state = operations.
@@ -85,15 +138,19 @@ function model(actions) {
     // for each subscription
     share();
 
-
-  actions.$advanceEntities.
-    subscribe(operations);
+  Observable.merge(_.values(actions)).subscribe(operations);
+  /*actions.$advanceEntities.subscribe(operations);
+  actions.$playerAMoveDown.
+    subscribe(operations, null, Log('move down complete'));*/
 
   var collisionEvent = event($state);
   var $goalACollision = collisionEvent(state => state.entities.ball.position.x <= 0);
   var $goalBCollision = collisionEvent(state => state.entities.ball.position.x >= state.gameWidth);
   var $wallTopCollision = collisionEvent(state => state.entities.ball.position.y <= 0);
   var $wallBottomCollision = collisionEvent(state => state.entities.ball.position.y >= state.gameHeight);
+
+  var $playerACollision = collisionEvent(state => boxCollision(state.entities.playerA, state.entities.ball));
+  var $playerBCollision = collisionEvent(state => boxCollision(state.entities.playerB, state.entities.ball));
 
   $goalACollision.
     map(() => Actions.ScorePlayerB).
@@ -109,6 +166,14 @@ function model(actions) {
 
   $wallBottomCollision.
     map(() => Actions.BounceUp).
+    subscribe(operations);
+
+  $playerACollision.
+    map(() => Actions.BounceRight).
+    subscribe(operations);
+
+  $playerBCollision.
+    map(() => Actions.BounceLeft).
     subscribe(operations);
 
   Observable.merge($goalACollision, $goalBCollision).
@@ -130,14 +195,36 @@ function view($state) {
     });
 
   return $state.map(state => {
+    var {ball, playerA, playerB} = state.entities;
     return {
       graphics: [
         {
+          id: 'ball',
           type: 'circle',
-          x: state.entities.ball.position.x,
-          y: state.entities.ball.position.y,
+          x: ball.position.x,
+          y: ball.position.y,
           radius: state.entities.ball.dimensions.width / 2,
-          fill: 0xFFFFFF, // use parseInt(0xFFFFFF, 16), I think
+          fill: 0xFFFFFF,
+          alpha: 1
+        },
+        {
+          id: 'playerA',
+          type: 'rectangle',
+          x: playerA.position.x,
+          y: playerA.position.y,
+          width: playerA.dimensions.width,
+          height: playerA.dimensions.height,
+          fill: 0xFFFFFF,
+          alpha: 1
+        },
+        {
+          id: 'playerB',
+          type: 'rectangle',
+          x: playerB.position.x,
+          y: playerB.position.y,
+          width: playerB.dimensions.width,
+          height: playerA.dimensions.height,
+          fill: 0xFFFFFF,
           alpha: 1
         }
       ]
@@ -161,5 +248,7 @@ run(main, {
 });
 
 function Log(msg) {
-  return function() { console.log(msg, ...arguments) };
+  return function() {
+    console.log(msg, ...arguments)
+  };
 }

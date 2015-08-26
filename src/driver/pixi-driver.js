@@ -25,17 +25,18 @@ function makePixiDriver(el, width, height) {
           else {
             views[graphic.id].clear();
           }
-          let circle = views[graphic.id];
+          let view = views[graphic.id];
 
-          circle.lineStyle(0);
-          circle.beginFill(graphic.fill, graphic.alpha);
-          circle.drawCircle(
-            Math.round(graphic.x),
-            Math.round(graphic.y),
-            Math.round(graphic.radius)
-          );
-          circle.endFill();
+          let update = ({
+            circle: updateCircle,
+            rectangle: updateRectangle
+          })[graphic.type];
 
+          if (!update) {
+            throw new Error(`Invalid graphic type ${graphic.type}`);
+          }
+
+          update(view, graphic);
         });
 
         renderer.render(stage);
@@ -44,6 +45,24 @@ function makePixiDriver(el, width, height) {
 
 
   return pixiDriver;
+}
+
+function updateCircle(circle, graphic) {
+  circle.lineStyle(0);
+  circle.beginFill(graphic.fill, graphic.alpha);
+  circle.drawCircle(
+    Math.round(graphic.x),
+    Math.round(graphic.y),
+    Math.round(graphic.radius)
+  );
+  circle.endFill();
+}
+
+function updateRectangle(rectangle, graphic) {
+  rectangle.lineStyle(0);
+  rectangle.beginFill(graphic.fill, graphic.alpha);
+  rectangle.drawRect(graphic.x, graphic.y, graphic.width, graphic.height);
+  rectangle.endFill();
 }
 
 export default makePixiDriver;
