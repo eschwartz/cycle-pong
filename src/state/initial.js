@@ -24,11 +24,13 @@ export default {
     },*/
     ball: {
       id: 'ball',
-      position: Point(_.random(100, 700), _.random(100, 500)),
-      velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)},
-      dimensions: Dimensions(10, 10)
-      //velocity: Point(0, 1)
+      //position: Point(_.random(100, 700), _.random(100, 500)),
+      position: Point(795, 100),
+      dimensions: Dimensions(10, 10),
+      //velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)}
+      velocity: Point(0.5, 0)
     }
   }
 };
 
+// velocity = [cos(angle) * speed, sin(angle) * speed]

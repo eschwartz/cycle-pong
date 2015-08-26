@@ -1,13 +1,17 @@
 import {run} from '@cycle/core';
 import _ from 'lodash';
-import {Observable, BehaviorSubject} from 'rx';
+import Rx from 'rx';
 import initialState from './state/initial';
 import createArray from './util/create-array';
 import makePixiDriver from './driver/pixi-driver.js';
 import {Point} from './geometry/geometries';
 import $tick from './util/tick';
 import {move, addPoints} from './geometry/util';
+import {Scheduler} from 'rx-dom';
 
+var {Observable, Subject} = Rx;
+
+Rx.config.longStackSupport = true;
 
 Observable.prototype.applyTo = function(seed) {
   return this.scan(seed, (seedVal, operation) => operation(seedVal)).startWith(seed);
@@ -34,7 +38,7 @@ var Actions = {
   ResetBall: state => {
     _.extend(state.entities.ball, {
       position: Point(_.random(100, state.gameWidth - 100), _.random(100, state.gameHeight - 100)),
-      velocity: {x: _.random(-1, 1, true), y: _.random(-1, 1, true)}
+      velocity: Point(0.5, 0)//{x: _.random(-1, 1, true), y: _.random(-1, 1, true)}
     });
     return state;
   }
@@ -48,54 +52,79 @@ function intent(DOM) {
 }
 
 function model(actions) {
-  var operations = new BehaviorSubject(x => x);
+  var operations = new Subject();
   var $state = operations.
-    sample($tick).
-    scan(initialState, (state, operation) => {
-      return operation(state);
-    }).
-    startWith(initialState);
+    do(Log('Operation')).
+    scan(initialState, (state, operation) => operation(state)).
+    // Share makes it so that this stream only runs once
+    // for each subscription
+    share();
 
 
-  actions.$advanceEntities.subscribe(operations);
+  actions.$advanceEntities.
+    do(Log('advance')).
+    subscribe(operations);
 
-  var $wallTopCollisions = $state.
-    filter(state => state.entities.ball.position.y <= 0);
-  var $wallBottomCollisions = $state.
-    filter(state => state.entities.ball.position.y >= state.gameHeight);
+
+  function collision($state) {
+    return collisionTest => $state.
+      map(collisionTest).
+      // Only return a single collision event
+      distinctUntilChanged().
+      filter(isCollision => isCollision);
+  }
+
+  collision($state)(state => state.entities.ball.position.x >= state.gameWidth)
+
+  var $playerBGoalCollision = $state.
+    map(state => state.entities.ball.position.x >= state.gameWidth).
+    distinctUntilChanged().
+    filter(isCollision => isCollision);
 
   var $playerAGoalCollision = $state.
-    filter(state => state.entities.ball.position.x <= 0);
-  var $playerBGoalCollision = $state.
-    filter(state => state.entities.ball.position.x >= state.gameWidth);
+    map(state => state.entities.ball.position.x <= 0).
+    distinctUntilChanged().
+    filter(isCollision => isCollision);
 
-  $wallTopCollisions.
-    map(() => Actions.BounceDown).
-    subscribe(operations);
-  $wallBottomCollisions.
-    map(() => Actions.BounceUp).
+  $playerBGoalCollision.
+    map(() => Actions.ScorePlayerA).
     subscribe(operations);
 
   $playerAGoalCollision.
     map(() => Actions.ScorePlayerB).
     subscribe(operations);
 
-  $playerBGoalCollision.
-    map(() => Actions.ScorePlayerA).
-    subscribe(operations);
+
+
 
   Observable.merge($playerAGoalCollision, $playerBGoalCollision).
     map(() => Actions.ResetBall).
     subscribe(operations);
 
+
+  /*var $wallTopCollisions = $state.
+    filter(state => state.entities.ball.position.y <= 0);
+  var $wallBottomCollisions = $state.
+    filter(state => state.entities.ball.position.y >= state.gameHeight);
+
+  $wallTopCollisions.
+    map(() => Actions.BounceDown).
+    subscribe(operations);
+  $wallBottomCollisions.
+    map(() => Actions.BounceUp).
+    subscribe(operations);*/
+
+
   return $state;
 }
 
 function view($state) {
-  $state.forEach(state => {
-    document.getElementById('playerAScore').innerText = state.playerAPoints;
-    document.getElementById('playerBScore').innerText = state.playerBPoints;
-  });
+  $state.
+    startWith(initialState).
+    forEach(state => {
+      document.getElementById('playerAScore').innerText = state.playerAPoints;
+      document.getElementById('playerBScore').innerText = state.playerBPoints;
+    });
 
   return $state.map(state => {
     return {
@@ -127,3 +156,7 @@ function main({canvas}) {
 run(main, {
   canvas: makePixiDriver(document.getElementById('game'), 800, 600)
 });
+
+function Log(msg) {
+  return function() { console.log(msg, ...arguments) };
+}

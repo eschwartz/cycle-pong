@@ -1,4 +1,5 @@
 import {Observable} from 'rx';
 import {Scheduler} from 'rx-dom';
 
-export default Observable.interval(1 / 30, Scheduler.requestAnimationFrame);
+var fps = 60;
+export default Observable.interval(1000 / fps, Scheduler.requestAnimationFrame);
