@@ -73,7 +73,7 @@ function event($source) {
     })).
     // Only return a single collision event
     distinctUntilChanged(x => x.isEvent).
-    filter(x => x.val).
+    filter(x => x.isEvent).
     map(x => x.val);
 }
 
