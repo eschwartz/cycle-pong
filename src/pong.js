@@ -4,9 +4,9 @@ import Rx from 'rx';
 import initialState from './state/initial';
 import createArray from './util/create-array';
 import makePixiDriver from './driver/pixi-driver.js';
-import {Point} from './geometry/geometries';
+import {Point, Dimensions} from './geometry/geometries';
 import $tick from './util/tick';
-import {move, addPoints, randomVelocity} from './geometry/util';
+import {move, addPoints, limitPosition, randomVelocity} from './geometry/util';
 import {Scheduler} from 'rx-dom';
 
 var {Observable, Subject} = Rx;
@@ -21,6 +21,8 @@ var Actions = {
   AdvanceEntity: entityId => state => {
     var entity = state.entities[entityId];
     entity.position = addPoints(entity.position, entity.velocity);
+    entity.position = limitPosition(Dimensions(state.gameWidth, state.gameHeight), entity.position, entity.dimensions, Dimensions(10, 10));
+
     return state;
   },
   AdvanceAllEntities: state => _.keys(state.entities).
@@ -63,6 +65,7 @@ var Actions = {
 const Keys = {
   DOWN: 40,
   UP: 38,
+  SPACE: 32,
   w: 87,
   s: 83,
   a: 65,
@@ -75,6 +78,14 @@ function intent() {
   var keyUp$ = key => Observable.fromEvent(document, 'keyup').
     filter(evt => evt.which === key);
   var playerSpeed = 8;
+
+  Observable.fromEvent(document, 'keydown').
+    distinct(evt => evt.which).
+    takeUntil(Observable.fromEvent(document, 'keyup')).
+    doOnCompleted(Log('completed')).
+    repeat().
+    do(Log('key press')).
+    subscribe();
 
   return {
     $advanceEntities: $tick.
@@ -199,10 +210,9 @@ function model(actions) {
     map(() => Actions.ResetBall).
     subscribe(operations);
 
-  /*
   // wip: trying to keep paddles within game board
 
-  event($state)(state => boxCollision(state.entities.playerA, state.entities.wallTop)).
+  /*event($state)(state => boxCollision(state.entities.playerA, state.entities.wallTop)).
     map(() => state => {
       state.entities.playerA.velocity = Point(0, 0);
       return state;

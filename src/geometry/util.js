@@ -13,6 +13,13 @@ export var addPoints = (pointA, pointB) => ({
   y: pointA.y + pointB.y
 });
 
+export function limitPosition(containerDimensions, entityPosition, entityDimensions, wiggleDimensions = {width:0, height: 0}) {
+  return {
+    x: Math.max(0, Math.min(entityPosition.x, containerDimensions.width - entityDimensions.width + wiggleDimensions.width)),
+    y: Math.max(0, Math.min(entityPosition.y, containerDimensions.height - entityDimensions.height + wiggleDimensions.height))
+  };
+}
+
 export function randomVelocity(speed) {
   var randomDir;
   var isTooVertical = dir => (
