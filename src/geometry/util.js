@@ -23,9 +23,14 @@ export function randomVelocity(speed) {
   do {
     randomDir = _.random(0, Math.PI * 2);
   } while (isTooVertical(randomDir));
+
+  return velocity(randomDir, speed);
+}
+
+export function velocity(radians, speed) {
   return {
-    x: Math.cos(randomDir) * speed,
-    y: Math.sin(randomDir) * speed
+    x: Math.cos(radians) * speed,
+    y: Math.sin(radians) * speed
   }
 }
 

@@ -53,6 +53,10 @@ var Actions = {
   ChangeVelocity: entityId => velocity => state => {
     state.entities[entityId].velocity = velocity;
     return state
+  },
+  AddBallDy: dy => state => {
+    state.entities.ball.velocity.y += dy;
+    return state;
   }
 };
 
@@ -68,13 +72,8 @@ const Keys = {
 function intent() {
   var keyDown$ = key => Observable.fromEvent(document, 'keydown').
     filter(evt => evt.which === key);
-  var keyUp$ = key => Observable.fromEvent(document, 'keyup')/*.
-    filter(evt => evt.which === key)*/;
-  /*var keyPress$ = key => keyDown$(key).
-    flatMap(evt => keyDown$(key).
-      startWith(evt).
-      takeUntil(keyUp$(key))
-  );*/
+  var keyUp$ = key => Observable.fromEvent(document, 'keyup').
+    filter(evt => evt.which === key);
   var playerSpeed = 8;
 
   return {
@@ -176,9 +175,39 @@ function model(actions) {
     map(() => Actions.BounceLeft).
     subscribe(operations);
 
+  var collisionOffset$ = ($collision, playerId) => {
+    return $collision.
+      map(state => {
+      var player = state.entities[playerId];
+      var ball = state.entities.ball;
+      var paddleMidpoint = player.position.y + (player.dimensions.height / 2);
+      return ball.position.y - paddleMidpoint;
+    });
+  };
+
+  // Change ball direction, from paddle offset
+  collisionOffset$($playerACollision, 'playerA').
+    map(offsetY => Actions.AddBallDy(offsetY / 10)).
+    subscribe(operations);
+
+  collisionOffset$($playerBCollision, 'playerB').
+    map(offsetY => Actions.AddBallDy(offsetY / 10)).
+    subscribe(operations);
+
+  // Reset ball after goal
   Observable.merge($goalACollision, $goalBCollision).
     map(() => Actions.ResetBall).
     subscribe(operations);
+
+  /*
+  // wip: trying to keep paddles within game board
+
+  event($state)(state => boxCollision(state.entities.playerA, state.entities.wallTop)).
+    map(() => state => {
+      state.entities.playerA.velocity = Point(0, 0);
+      return state;
+    }).
+    subscribe(operations);*/
 
   // Start out with the ball in a random location
   operations.onNext(Actions.ResetBall);

@@ -29,23 +29,27 @@ export default {
       position: Point(795, 100),
       dimensions: Dimensions(10, 10),
       velocity: Point(0.5, 0)
-    },/*
+    },
     wallTop: {
       position: Point(1, 0),
-      dimensions: Dimensions(gameWidth - 2, 1)
+      dimensions: Dimensions(gameWidth - 2, 1),
+      velocity: Point(0., 0)
     },
     wallBottom: {
       position: Point(1, gameHeight),
-      dimensions: Dimensions(gameWidth - 1, 1)
+      dimensions: Dimensions(gameWidth - 1, 1),
+      velocity: Point(0., 0)
     },
     wallLeft: {
       position: Point(0, 0),
-      dimensions: Dimensions(1, gameHeight)
+      dimensions: Dimensions(1, gameHeight),
+      velocity: Point(0., 0)
     },
     wallRight: {
       position: Point(gameWidth, 0),
-      dimensions: Dimensions(1, gameHeight)
-    }*/
+      dimensions: Dimensions(1, gameHeight),
+      velocity: Point(0., 0)
+    }
   }
 };
 
